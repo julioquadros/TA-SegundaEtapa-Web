@@ -1,0 +1,225 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://xmlns.jcp.org/jsf/core">
+    <ui:composition template="/templates/template.xhtml">
+        <ui:define name="titulo">Relação de Operações de Cheques</ui:define>
+        <ui:define name="conteudo">
+            <h:form id="formListagem" prependId="false">
+                <p:growl id="growl"/>
+                <p:commandButton actionListener="#{controleOperacao.novo()}"
+                                 value="Nova Operação" icon="ui-icon-plus"
+                                 oncomplete="PF('dlg').show();"
+                                 update=":formEdicao"/>
+                <div align="center">
+                    <p:panelGrid columns="11">
+                        <p:outputLabel value="Ordem:"/>
+                        <p:selectOneMenu value="#{controleOperacao.dao.ordem}">
+                            <f:selectItem itemLabel="ID" itemValue="id"/>
+                            <f:selectItem itemLabel="Cliente" itemValue="cliente"/>
+                            <f:selectItem itemLabel="Taxa de Juros" itemValue="juroMensal"/>
+                            <f:selectItem itemLabel="Data" itemValue="dataOperacao">
+                            </f:selectItem>
+
+                            <p:ajax update="listagem"/>
+                        </p:selectOneMenu>
+                        <p:outputLabel value="Filtro: "/>
+                        <p:inputText value="#{controleOperacao.dao.filtro}">
+                            <p:ajax event="keyup" update="listagem"/>
+                        </p:inputText>
+                        <p:outputLabel value="Máximo de objetos"/>
+                        <p:inputText value="#{controleOperacao.dao.maximoObjetos}" size="5">
+                            <p:ajax event="keyup" update="listagem"/>
+                        </p:inputText>
+                        <p:commandButton action="#{controleOperacao.dao.primeiro()}"
+                                         value="Primeiro" update="listagem"/>
+                        <p:commandButton action="#{controleOperacao.dao.anterior()}"
+                                         value="Anterior" update="listagem"/>
+                        <p:commandButton action="#{controleOperacao.dao.proximo()}"
+                                         value="Próximo" update="listagem"/>
+                        <p:commandButton action="#{controleOperacao.dao.ultimo()}"
+                                         value="Ultimo" update="listagem"/>
+                    </p:panelGrid>
+                </div>
+                <p:dataTable value="#{controleOperacao.dao.listaObjetos}" var="obj"
+                             id="listagem">
+                    <f:facet name="header">
+                        <p:outputLabel value="Listagem de Operações"/>
+                    </f:facet>
+                    <f:facet name="footer">
+                        <p:outputLabel value="#{controleOperacao.dao.mensagemNavegacao}"/>
+                    </f:facet>
+                    <p:column headerText="Data">
+                        <p:outputLabel value="#{obj.dataOperacao}">
+                            <f:converter converterId="converterCalendar"/>
+                        </p:outputLabel>
+                    </p:column>
+                    <p:column headerText="Cliente">
+                        <p:outputLabel value="#{obj.cliente.nome}"/>
+                    </p:column>
+                    <p:column headerText="Juro Mensal">
+                        <p:outputLabel value="#{obj.juroMensal}">
+                            <f:convertNumber pattern="0,00 %"/>
+                        </p:outputLabel>
+                    </p:column>
+                    <p:column headerText="ID">
+                        <p:outputLabel value="#{obj.id}"/>
+                    </p:column>
+                    <p:column headerText="Ações">
+                        <div align="center">
+                            <p:commandButton
+                                actionListener="#{controleOperacao.alterar(obj.id)}"
+                                icon="ui-icon-pencil"
+                                update=":formEdicao"
+                                process="@form"
+                                oncomplete="PF('dlg').show();"
+                                id="btnAlterar"/>
+                            <p:commandButton
+                                actionListener="#{controleOperacao.excluir(obj.id)}"
+                                icon="ui-icon-trash"
+                                update="@form"
+                                process="@form"
+                                id="btnExcluir"
+                                onclick="if (!confirm('Confirma a exclusão do objeto'))
+                                            return false"/>                           
+                        </div>
+                    </p:column>                    
+                </p:dataTable>
+            </h:form>
+        </ui:define>
+        <ui:define name="dialogos">
+            <p:dialog widgetVar="dlg" header="Edição" resizable="false" modal="true"
+                      width="700" height="450">
+                <h:form id="formEdicao" prependId="false">
+                    <p:growl/>
+                    <p:tabView id="tab">
+                        <p:tab title="Dados Principais">
+                            <div align="center">
+                                <p:panelGrid columns="2">
+                                    <f:facet name="footer">
+                                        <div align="center">
+                                            <p:commandButton value="Salvar"
+                                                             icon="ui-icon-disk"
+                                                             actionListener="#{controleOperacao.salvar()}"
+                                                             update=":formEdicao :formListagem"
+                                                             oncomplete="if(!args.validationFailed){PF('dlg').hide();}"/>
+                                        </div>
+                                    </f:facet>
+                                    <p:outputLabel for="txtID" value="ID"/>
+                                    <p:inputText id="txtID" value="#{controleOperacao.objeto.id}" readonly="true"
+                                                 size="10"/>
+                                    <p:outputLabel for="txtData" value="Data"/>
+                                    <p:calendar id="txtData" value="#{controleOperacao.objeto.dataOperacao}"
+                                                mask="true" pattern="dd/MM/yyyy"
+                                                placeholder="Obrigatório"
+                                                navigator="true">
+                                        <f:converter converterId="converterCalendar"/>
+                                    </p:calendar>
+                                    <p:outputLabel for="txtJuroMensal" value="Juro Mensal"/>
+                                    <p:inputText id="txtJuroMensal" value="#{controleOperacao.objeto.juroMensal}"
+                                                 size="40" maxlength="40"       
+                                                 placeholder="Obrigatório"/>
+                                    <p:outputLabel value="Cliente da Operação:" for="selectCliente"/>
+                                    <p:selectOneMenu value="#{controleOperacao.objeto.cliente}"
+                                                     id="selectCliente">
+                                        <f:converter converterId="converterCliente"/>
+                                        <f:selectItem noSelectionOption="true"
+                                                      itemLabel="Selecione um registro"/>
+                                        <f:selectItems value="#{controleOperacao.daoCliente.listaTodos}"
+                                                       var="cliente" itemLabel="#{cliente.nome}"/>
+                                    </p:selectOneMenu>                                 
+                                </p:panelGrid>
+                            </div>
+                        </p:tab>
+                        <p:tab title="Cheques da Operação">
+                            <p:dataTable value="#{controleOperacao.objeto.cheques}"
+                                         var="cheque" rowIndexVar="idx" id="listaCheque">
+                                <f:facet name="header">
+                                    <p:commandButton value="Novo cheque"
+                                                     actionListener="#{controleOperacao.novoCheque()}"
+                                                     update=":formCheque" icon="ui-icon-plus"
+                                                     id="btnNovoCheque"
+                                                     process="btnNovoCheque"
+                                                     oncomplete="PF('dlgCheque').show();"/>
+                                </f:facet>
+                                <p:column headerText="Valor">
+                                    <p:outputLabel value="#{cheque.valor}">
+                                        <f:convertNumber pattern="R$ 0.00"/>
+                                    </p:outputLabel>
+                                </p:column>    
+                                <p:column headerText="Data de Depósito">
+                                    <p:outputLabel value="#{cheque.dataDeposito}">
+                                        <f:converter converterId="converterCalendar"/>
+                                    </p:outputLabel>
+                                </p:column>  
+                                <p:column headerText="Ações">
+                                    <div align="center">
+                                        <p:commandButton id="btnAlterarCheque" icon="ui-icon-pencil"
+                                                         actionListener="#{controleOperacao.alterarCheque(idx)}"
+                                                         update=":formCheque" process="btnAlterarCheque"
+                                                         oncomplete="PF('dlgCheque').show();"/>
+                                        <p:commandButton id="btnRemoverCheque" icon="ui-icon-trash"
+                                                         actionListener="#{controleOperacao.removerCheque(idx)}"
+                                                         process="btnRemoverCheque"
+                                                         update="listaCheque :formListagem:growl"
+                                                         onclick="if (!confirm('Confirma a exclusão do objeto?'))
+                                                                     return false"/>
+                                    </div>
+                                </p:column>
+                            </p:dataTable>
+                        </p:tab>
+                    </p:tabView>
+                </h:form>
+                <ui:include src="/templates/ajaxstatus.xhtml"/>
+            </p:dialog>
+            <p:dialog header="Edição de Cheques da Operação"
+                      widgetVar="dlgCheque" resizable="false" modal="true"
+                      width="400">
+                <h:form id="formCheque">
+                    <p:growl/>
+                    <div align="center">
+                        <p:panelGrid columns="2">
+                            <f:facet name="footer">
+                                <div align="center">
+                                    <p:commandButton id="btnAdicionarCheque"
+                                                     value="Salvar"
+                                                     icon="ui-icon-plus"
+                                                     actionListener="#{controleOperacao.salvarCheque()}"
+                                                     update=":formEdicao:tab:listaCheque :formCheque"
+                                                     process="@form"
+                                                     oncomplete="if(!args.validationFailed){PF('dlgCheque').hide();}"/> 
+                                </div>
+                            </f:facet>
+                            <p:outputLabel value="ID" for="txtId"/>
+                            <p:inputText id="txtId" value="#{controleOperacao.cheque.id}" readonly="true"/>
+                            <p:outputLabel value="Valor" for="txtValorCheque"/>
+                            <p:inputText id="txtValorCheque" value="#{controleOperacao.cheque.valor}"/>
+                            <p:outputLabel for="txtDataCheque" value="Data de Depósito"/>
+                            <p:calendar id="txtDataCheque" value="#{controleOperacao.cheque.dataDeposito}"
+                                                mask="true" pattern="dd/MM/yyyy"
+                                                placeholder="Obrigatório"
+                                                navigator="true">
+                                        <f:converter converterId="converterCalendar"/>
+                                    </p:calendar>
+                            <p:outputLabel value="Banco" for="txtBanco"/>
+                            <p:inputText id="txtBanco" value="#{controleOperacao.cheque.banco}"/>
+                            <p:outputLabel value="Agencia" for="txtAgencia"/>
+                            <p:inputText id="txtAgencia" value="#{controleOperacao.cheque.agencia}"/>
+                            <p:outputLabel value="Numero da Conta" for="txtNumConta"/>
+                            <p:inputText id="txtNumConta" value="#{controleOperacao.cheque.numConta}"/>
+                            <p:outputLabel value="Numero do Cheque" for="txtCheque"/>
+                            <p:inputText id="txtCheque" value="#{controleOperacao.cheque.numCheque}"/>
+                            <p:outputLabel value="Emitente CPF/CNPJ" for="txtCpfCnpj"/>
+                            <p:inputText id="txtCpfCnpj" value="#{controleOperacao.cheque.emitenteCpfCnpj}"/>
+                        </p:panelGrid>
+                    </div>
+                </h:form>         
+                <ui:include src="/templates/ajaxstatus.xhtml"/>
+            </p:dialog>
+        </ui:define>         
+    </ui:composition>
+</html>
+

@@ -1,0 +1,177 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://xmlns.jcp.org/jsf/core">
+    <ui:composition template="/templates/template.xhtml">
+        <ui:define name="titulo">Relação de Estabelecimentos</ui:define>
+        <ui:define name="conteudo">
+            <h:form id="formListagem" prependId="false">
+                <p:growl id="growl"/>
+                <p:commandButton actionListener="#{controleEstabelecimento.novo()}"
+                                 value="Novo Estabelecimento" icon="ui-icon-plus"
+                                 oncomplete="PF('dlg').show();"
+                                 update=":formEdicao"/>
+                <div align="center">
+                    <p:panelGrid columns="11">
+                        <p:outputLabel value="Ordem:"/>
+                        <p:selectOneMenu value="#{controleEstabelecimento.dao.ordem}">
+                            <f:selectItem itemLabel="ID" itemValue="id"/>
+
+                            <p:ajax update="listagem"/>
+                        </p:selectOneMenu>
+                        <p:outputLabel value="Filtro: "/>
+                        <p:inputText value="#{controleEstabelecimento.dao.filtro}">
+                            <p:ajax event="keyup" update="listagem"/>
+                        </p:inputText>
+                        <p:outputLabel value="Máximo de objetos"/>
+                        <p:inputText value="#{controleEstabelecimento.dao.maximoObjetos}" size="5">
+                            <p:ajax event="keyup" update="listagem"/>
+                        </p:inputText>
+                        <p:commandButton action="#{controleEstabelecimento.dao.primeiro()}"
+                                         value="Primeiro" update="listagem"/>
+                        <p:commandButton action="#{controleEstabelecimento.dao.anterior()}"
+                                         value="Anterior" update="listagem"/>
+                        <p:commandButton action="#{controleEstabelecimento.dao.proximo()}"
+                                         value="Próximo" update="listagem"/>
+                        <p:commandButton action="#{controleEstabelecimento.dao.ultimo()}"
+                                         value="Ultimo" update="listagem"/>
+                    </p:panelGrid>
+                </div>
+                <p:dataTable value="#{controleEstabelecimento.dao.listaObjetos}" var="obj"
+                             id="listagem">
+                    <f:facet name="header">
+                        <p:outputLabel value="Relação de Establecimentos"/>
+                    </f:facet>
+                    <f:facet name="footer">
+                        <p:outputLabel value="#{controleEstabelecimento.dao.mensagemNavegacao}"/>
+                    </f:facet>
+                    <p:column headerText="ID">
+                        <p:outputLabel value="#{obj.id}"/>
+                    </p:column>
+                    <p:column headerText="Nome">
+                        <p:outputLabel value="#{obj.nome}"/>
+                    </p:column>
+                    <p:column headerText="CNPJ">
+                        <p:outputLabel value="#{obj.cnpj}"/>
+                    </p:column>
+                    <p:column headerText="Ações">
+                        <div align="center">
+                            <p:commandButton
+                                actionListener="#{controleEstabelecimento.alterar(obj.id)}"
+                                icon="ui-icon-pencil"
+                                update=":formEdicao"
+                                process="@form"
+                                oncomplete="PF('dlg').show();"
+                                id="btnAlterar"/>
+                            <p:commandButton
+                                actionListener="#{controleEstabelecimento.excluir(obj.id)}"
+                                icon="ui-icon-trash"
+                                update="@form"
+                                process="@form"
+                                id="btnExcluir"
+                                onclick="if (!confirm('Confirma a exclusão do objeto?'))
+                                            return false"/>                           
+                        </div>
+                    </p:column>                    
+                </p:dataTable>
+            </h:form>
+        </ui:define>
+        <ui:define name="dialogos">
+            <p:dialog widgetVar="dlg" header="Edição" resizable="false" modal="true"
+                      width="700" height="450">
+                <h:form id="formEdicao" prependId="false">
+                    <p:growl/>
+                    <p:tabView id="tab">
+                        <p:tab title="Dados Principais">
+                            <div align="center">
+                                <p:panelGrid columns="2">
+                                    <f:facet name="footer">
+                                        <div align="center">
+                                            <p:commandButton value="Salvar"
+                                                             icon="ui-icon-disk"
+                                                             actionListener="#{controleEstabelecimento.salvar()}"
+                                                             update=":formEdicao :formListagem"
+                                                             oncomplete="if(!args.validationFailed){PF('dlg').hide();}"/>
+                                        </div>
+                                    </f:facet>
+                                    <p:outputLabel for="txtID" value="ID"/>
+                                    <p:inputText id="txtID" value="#{controleEstabelecimento.objeto.id}" readonly="true"
+                                                 size="10"/>
+                                    <p:outputLabel for="txtNome" value="Nome"/>  
+                                    <p:inputText id="txtNome" value="#{controleEstabelecimento.objeto.nome}" size="40"/>   
+                                    <p:outputLabel for="txtCNPJ" value="CNPJ"/>  
+                                    <p:inputText id="txtCNPJ" value="#{controleEstabelecimento.objeto.cnpj}" size="14"/>                                       
+                                </p:panelGrid>
+                            </div>
+                        </p:tab>
+                        <p:tab title="Administradores">
+                            <p:dataTable value="#{controleEstabelecimento.objeto.administradores}"
+                                         var="adm" rowIndexVar="idx" id="listaAdministrador">
+                                <f:facet name="header">
+                                    <p:commandButton value="Novo Administrador"
+                                                     actionListener="#{controleEstabelecimento.novoAdministrador()}"
+                                                     update=":formAdministrador" icon="ui-icon-plus"
+                                                     id="btnNovoAdministrador"
+                                                     process="btnNovoAdministrador"
+                                                     oncomplete="PF('dlgAdministrador').show();"/>
+                                </f:facet>
+                                <p:column headerText="Nome">
+                                    <p:outputLabel value="#{adm.nome}">
+                                    </p:outputLabel>
+                                </p:column>    
+                                <p:column headerText="CPF">
+                                    <p:outputLabel value="#{adm.cpf}">
+                                    </p:outputLabel>
+                                </p:column>  
+                                <p:column headerText="Ações">
+                                    <div align="center">
+                                        <p:commandButton id="btnRemoverAdministrador" icon="ui-icon-trash"
+                                                         actionListener="#{controleEstabelecimento.removerAdministrador(obj)}"
+                                                         process="btnRemoverAdministrador"
+                                                         update="listaAdministrador :formListagem:growl"
+                                                         onclick="if (!confirm('Confirma a exclusão do objeto?'))
+                                                                     return false"/>
+                                    </div>
+                                </p:column>
+                            </p:dataTable>
+                        </p:tab>
+                    </p:tabView>
+                </h:form>
+                <ui:include src="/templates/ajaxstatus.xhtml"/>
+            </p:dialog>
+            <p:dialog header="Edição de Administradores do Estabelecimento"
+                      widgetVar="dlgAdministrador" resizable="false" modal="true"
+                      width="400">
+                <h:form id="formAdministrador">
+                    <p:growl/>
+                    <div align="center">
+                        <p:panelGrid columns="2">
+                            <f:facet name="footer">
+                                <div align="center">
+                                    <p:commandButton id="btnAdicionarAdministrador"
+                                                     value="Salvar"
+                                                     icon="ui-icon-plus"
+                                                     actionListener="#{controleEstabelecimento.salvarAdministrador()}"
+                                                     update=":formEdicao:tab:listaAdministrador :formAdministrador"
+                                                     process="@form"
+                                                     oncomplete="if(!args.validationFailed){PF('dlgAdministrador').hide();}"/> 
+                                </div>
+                            </f:facet>
+                            <p:selectOneMenu id="selectAdministrador" value="#{controleEstabelecimento.administrador}">
+                                <f:converter converterId="converterAdministrador"/>
+                                <f:selectItem itemLabel="Selecione um registro" noSelectionOption="true"/>
+                                <f:selectItems value="#{controleEstabelecimento.daoAdministrador.listaTodos}"
+                                               var="a" itemLabel="#{a.nome}"/>
+                            </p:selectOneMenu>
+                        </p:panelGrid>
+                    </div>
+                </h:form>         
+                <ui:include src="/templates/ajaxstatus.xhtml"/>
+            </p:dialog>
+        </ui:define>         
+    </ui:composition>
+</html>
+

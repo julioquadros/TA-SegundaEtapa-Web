@@ -1,0 +1,18 @@
+.ui-widget{
+    font-size: 12px !important;
+}
+
+.ui-layout-north {
+    z-index:20 !important;
+    overflow:visible !important;
+}
+
+.ui-layout-north .ui-layout-unit-content {
+    overflow:visible !important;
+}
+
+.vencida{
+    background-color: red !important;
+    background-image: none !important;
+    color: #000000 !important;
+}
